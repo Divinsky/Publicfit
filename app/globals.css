@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+a { text-underline-offset: 2px; }
+input, select, textarea { background: white; }
