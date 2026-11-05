@@ -113,6 +113,10 @@ export default function Messages() {
                   Send
                 </button>
               </form>
+              <p className="text-sm text-stone-500 mt-2 whitespace-pre-line">{`Replies here are written by a human — the creator or their team.
+If a reply goes out more than 24 hours after the fan or brand messaged,
+it is sent with the human_agent tag, within 7 days.
+PublicFit never sends automated messages.`}</p>
               {sentNote && <p className="text-sm text-stone-500 mt-2">{sentNote}</p>}
             </>
           ) : (
