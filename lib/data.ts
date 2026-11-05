@@ -217,3 +217,38 @@ export const MESSAGES: DmConversation[] = [
     ],
   },
 ];
+
+// Seeded demo Instagram comments on a creator's posts (instagram_manage_comments).
+// Commenters are fictional; the threads are illustrative only.
+export type IgComment = { id: string; personId: string; postCaption: string; fromName: string; fromHandle: string; text: string; time: string; replied?: string };
+export const COMMENTS: IgComment[] = [
+  { id: "c1", personId: "simone-biles", postCaption: "Back in the gym — new training block.", fromName: "Jess T.", fromHandle: "@jess.trains", text: "This is so inspiring. What do you wear for training?", time: "2h" },
+  { id: "c2", personId: "simone-biles", postCaption: "Back in the gym — new training block.", fromName: "Ari P.", fromHandle: "@ari.plays", text: "The Athleta set from your storefront is my favorite!", time: "5h", replied: "Thank you! It's the one I train in most days." },
+  { id: "c3", personId: "emma-chamberlain", postCaption: "Morning coffee, as usual.", fromName: "Sam W.", fromHandle: "@sam.wakes", text: "Is this the new Chamberlain roast?", time: "1h" },
+  { id: "c4", personId: "lebron-james", postCaption: "Game day.", fromName: "Chris D.", fromHandle: "@chris.dunks", text: "Those shoes are clean. Link?", time: "3h" },
+];
+
+// Seeded demo Instagram insights (instagram_manage_insights), last 28 days.
+export type IgInsights = { personId: string; reach: number; impressions: number; profileViews: number; followers: number; followerChange: number; topPosts: { caption: string; reach: number }[] };
+export const INSIGHTS: IgInsights[] = [
+  { personId: "simone-biles", reach: 4820000, impressions: 12400000, profileViews: 318000, followers: 11200000, followerChange: 42000, topPosts: [{ caption: "Back in the gym — new training block.", reach: 2100000 }, { caption: "Mental health check-in.", reach: 1800000 }] },
+  { personId: "emma-chamberlain", reach: 3900000, impressions: 9800000, profileViews: 264000, followers: 16400000, followerChange: 31000, topPosts: [{ caption: "Morning coffee, as usual.", reach: 1900000 }, { caption: "New Chamberlain Coffee drop.", reach: 1500000 }] },
+  { personId: "lebron-james", reach: 9100000, impressions: 24100000, profileViews: 502000, followers: 159000000, followerChange: 88000, topPosts: [{ caption: "Game day.", reach: 4200000 }, { caption: "Community court opening.", reach: 3100000 }] },
+];
+
+// Seeded demo Facebook Page posts (pages_*): Page posts, visitor posts,
+// and comments on them. All illustrative.
+export type PagePost = { id: string; personId: string; kind: "page" | "visitor"; author: string; text: string; time: string; likes: number; comments: { from: string; text: string; time: string }[] };
+export const PAGE_POSTS: PagePost[] = [
+  { id: "pp1", personId: "simone-biles", kind: "page", author: "Simone Biles", text: "New training block starts today. Storefront is stocked with the pieces I actually train in.", time: "Tue 09:00", likes: 18400, comments: [{ from: "Maya R.", text: "Ordering the tight today!", time: "Tue 10:14" }] },
+  { id: "pp2", personId: "simone-biles", kind: "visitor", author: "Jess T.", text: "Tried the recovery journal from the storefront — love it.", time: "Mon 18:20", likes: 212, comments: [] },
+  { id: "pp3", personId: "emma-chamberlain", kind: "page", author: "Emma Chamberlain", text: "Morning coffee, as usual. New roast is in the storefront.", time: "Mon 08:00", likes: 22100, comments: [{ from: "Sam W.", text: "Is this the new roast?", time: "Mon 09:12" }] },
+];
+
+// Seeded demo branded-content requests (facebook_branded_content_ads_brand):
+// a brand asks to boost a creator's post as a branded-content ad.
+export type BrandedRequest = { id: string; personId: string; brandId: string; postCaption: string; note: string; status: "pending" | "approved" };
+export const BRANDED_REQUESTS: BrandedRequest[] = [
+  { id: "br1", personId: "simone-biles", brandId: "athleta", postCaption: "Back in the gym — new training block.", note: "Athleta asks to boost this post as a branded-content ad for 14 days.", status: "pending" },
+  { id: "br2", personId: "emma-chamberlain", brandId: "louis-vuitton", postCaption: "Morning coffee, as usual.", note: "Louis Vuitton asks to boost this post as a branded-content ad for 7 days.", status: "pending" },
+];

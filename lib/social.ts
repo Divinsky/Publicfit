@@ -259,3 +259,151 @@ export async function getInstagramConversations(): Promise<DmThread[] | null> {
     return null;
   }
 }
+
+// --- Comments (instagram_manage_comments) ---
+
+/** Reply to an Instagram comment. Live only with a real comment id + token. */
+export async function replyToInstagramComment(
+  commentId: string,
+  text: string
+): Promise<{ ok: boolean; live: boolean }> {
+  if (!TOKEN || !commentId || !text.trim()) return { ok: false, live: false };
+  try {
+    const url = `${GRAPH_BASE}/${encodeURIComponent(commentId)}/replies?access_token=${encodeURIComponent(TOKEN)}`;
+    const res = (await postJson(url, { message: text.trim() })) as { id?: string };
+    return { ok: !!res?.id, live: true };
+  } catch {
+    return { ok: false, live: false };
+  }
+}
+
+// --- Insights (instagram_manage_insights) ---
+
+export type LiveInsights = { reach: number; impressions: number; profileViews: number };
+
+/** Last-28-day Instagram insights for the connected account. Null when not live. */
+export async function getInstagramInsights(): Promise<LiveInsights | null> {
+  if (!TOKEN) return null;
+  try {
+    const igId = await getOwnIgId();
+    if (!igId) return null;
+    const url = `${GRAPH_BASE}/${igId}/insights?metric=reach,impressions,profile_views&period=day&metric_type=total&access_token=${encodeURIComponent(TOKEN)}`;
+    const data = (await fetchJson(url)) as {
+      data?: { name?: string; values?: { value?: number }[] }[];
+    };
+    const sum = (name: string) =>
+      (data?.data || []).find((d) => d.name === name)?.values?.reduce((a, v) => a + (v.value || 0), 0) || 0;
+    return { reach: sum("reach"), impressions: sum("impressions"), profileViews: sum("profile_views") };
+  } catch {
+    return null;
+  }
+}
+
+// --- Publishing (instagram_content_publish; Page Mentions via tagging) ---
+
+/**
+ * Publish a photo post to Instagram (two-step Content Publishing flow).
+ * `mentions` are Page/usernames to tag in the caption (Page Mentions).
+ * Returns { ok, live, mediaId }.
+ */
+export async function publishInstagramPost(
+  imageUrl: string,
+  caption: string,
+  mentions: string[] = []
+): Promise<{ ok: boolean; live: boolean; mediaId?: string }> {
+  if (!TOKEN || !imageUrl || !caption.trim()) return { ok: false, live: false };
+  try {
+    const igId = await getOwnIgId();
+    if (!igId) return { ok: false, live: false };
+    const fullCaption = [...mentions.map((m) => `@${m}`), caption.trim()].join(" ").trim();
+    const create = (await postJson(
+      `${GRAPH_BASE}/${igId}/media?access_token=${encodeURIComponent(TOKEN)}`,
+      { image_url: imageUrl, caption: fullCaption }
+    )) as { id?: string };
+    if (!create?.id) return { ok: false, live: false };
+    const pub = (await postJson(
+      `${GRAPH_BASE}/${igId}/media_publish?access_token=${encodeURIComponent(TOKEN)}`,
+      { creation_id: create.id }
+    )) as { id?: string };
+    return { ok: !!pub?.id, live: true, mediaId: pub?.id };
+  } catch {
+    return { ok: false, live: false };
+  }
+}
+
+// --- Facebook Page (pages_read_user_content, pages_manage_posts,
+// pages_manage_metadata, pages_manage_engagement) ---
+
+export type LivePagePost = {
+  id: string; author: string; text: string; time: string; likes: number;
+  comments: { from: string; text: string; time: string }[];
+};
+
+async function getOwnPageId(): Promise<string | null> {
+  const data = (await fetchJson(
+    `${GRAPH_BASE}/me/accounts?fields=id&access_token=${encodeURIComponent(TOKEN)}`
+  )) as { data?: { id?: string }[] };
+  return data?.data?.[0]?.id || null;
+}
+
+/** Live Facebook Page posts + visitor posts + their comments. Null when not live. */
+export async function getPagePosts(): Promise<LivePagePost[] | null> {
+  if (!TOKEN) return null;
+  try {
+    const pageId = await getOwnPageId();
+    if (!pageId) return null;
+    const fields = "message,created_time,likes.summary(true),comments{message,from,created_time}";
+    const data = (await fetchJson(
+      `${GRAPH_BASE}/${pageId}/posts?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(TOKEN)}`
+    )) as {
+      data?: {
+        id?: string; message?: string; created_time?: string;
+        likes?: { summary?: { total_count?: number } };
+        comments?: { data?: { message?: string; from?: { name?: string }; created_time?: string }[] };
+      }[];
+    };
+    return (data?.data || []).map((p) => ({
+      id: p.id || "",
+      author: "Page",
+      text: p.message || "",
+      time: (p.created_time || "").slice(0, 10),
+      likes: p.likes?.summary?.total_count || 0,
+      comments: (p.comments?.data || []).map((c) => ({
+        from: c.from?.name || "Visitor",
+        text: c.message || "",
+        time: (c.created_time || "").slice(0, 10),
+      })),
+    })).filter((p) => p.id);
+  } catch {
+    return null;
+  }
+}
+
+/** Reply to a comment on a Facebook Page post. */
+export async function replyToPageComment(
+  commentId: string,
+  text: string
+): Promise<{ ok: boolean; live: boolean }> {
+  if (!TOKEN || !commentId || !text.trim()) return { ok: false, live: false };
+  try {
+    const url = `${GRAPH_BASE}/${encodeURIComponent(commentId)}/comments?access_token=${encodeURIComponent(TOKEN)}`;
+    const res = (await postJson(url, { message: text.trim() })) as { id?: string };
+    return { ok: !!res?.id, live: true };
+  } catch {
+    return { ok: false, live: false };
+  }
+}
+
+/** Update a Facebook Page's about text (pages_manage_metadata). */
+export async function updatePageInfo(about: string): Promise<{ ok: boolean; live: boolean }> {
+  if (!TOKEN || !about.trim()) return { ok: false, live: false };
+  try {
+    const pageId = await getOwnPageId();
+    if (!pageId) return { ok: false, live: false };
+    const url = `${GRAPH_BASE}/${pageId}?access_token=${encodeURIComponent(TOKEN)}`;
+    const res = (await postJson(url, { about: about.trim() })) as { success?: boolean };
+    return { ok: res?.success !== false, live: true };
+  } catch {
+    return { ok: false, live: false };
+  }
+}

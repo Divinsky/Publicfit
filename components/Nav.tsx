@@ -10,6 +10,12 @@ export default function Nav() {
           <Link href="/store/simone-biles">Storefronts</Link>
           <Link href="/feed">Fan Feed</Link>
           <Link href="/messages">Messages</Link>
+          <Link href="/comments">Comments</Link>
+          <Link href="/insights">Insights</Link>
+          <Link href="/publish">Publish</Link>
+          <Link href="/page-manager">Page</Link>
+          <Link href="/discover">Discover</Link>
+          <Link href="/branded-content">Branded Content</Link>
           <Link href="/waitlist">Waitlist</Link>
           <Link href="/trust">Trust &amp; Ethics</Link>
         </nav>

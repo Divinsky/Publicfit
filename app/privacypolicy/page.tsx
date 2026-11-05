@@ -56,6 +56,30 @@ export default function PrivacyPolicy() {
             externally.
           </li>
           <li>
+            <strong>Instagram comments:</strong> when a creator uses Comments, we read the
+            comments on their Instagram posts and send the replies they write, through the
+            Graph API. Only the comments on their own posts are read, only at their request.
+            In the demo, comments are seeded and replies are kept local.
+          </li>
+          <li>
+            <strong>Instagram insights:</strong> when a creator views Insights, we read their
+            own account insights (reach, impressions, profile views, follower change) through
+            the Graph API. This is the creator&apos;s own account data, shown only to them, and
+            never used for scoring. In the demo, numbers are seeded.
+          </li>
+          <li>
+            <strong>Publishing:</strong> when a creator publishes, we post the photo and
+            caption they provide to their Instagram, and tag any Page they name (a Page
+            Mention). Only what they provide is posted, only at their request. In the demo,
+            posts are accepted locally and not published externally.
+          </li>
+          <li>
+            <strong>Facebook Page:</strong> when a creator uses Page Manager, we read their
+            Facebook Page posts, visitor posts, and comments, and update the Page about text
+            they provide, through the Graph API. Only their own Page is accessed. In the demo,
+            posts are seeded and changes are kept local.
+          </li>
+          <li>
             <strong>Correction and deletion requests:</strong> you can ask us to correct or delete
             a profile. In the demo, requests are captured as local session state. In production,
             they go to a human reviewer, and deletion removes the profile and its embeddings.
