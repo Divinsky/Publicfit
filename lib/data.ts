@@ -252,3 +252,13 @@ export const BRANDED_REQUESTS: BrandedRequest[] = [
   { id: "br1", personId: "simone-biles", brandId: "athleta", postCaption: "Back in the gym — new training block.", note: "Athleta asks to boost this post as a branded-content ad for 14 days.", status: "pending" },
   { id: "br2", personId: "emma-chamberlain", brandId: "louis-vuitton", postCaption: "Morning coffee, as usual.", note: "Louis Vuitton asks to boost this post as a branded-content ad for 7 days.", status: "pending" },
 ];
+
+// Seeded demo future events with a creator (instagram_manage_events):
+// a creator hosts an upcoming event (live Q&A, product drop, meetup)
+// and fans can RSVP. Illustrative only.
+export type CreatorEvent = { id: string; personId: string; title: string; kind: "Live Q&A" | "Product drop" | "Meetup" | "Workout"; date: string; time: string; description: string; rsvps: number };
+export const EVENTS: CreatorEvent[] = [
+  { id: "ev1", personId: "simone-biles", title: "Live Q&A: training, recovery, and the new block", kind: "Live Q&A", date: "Nov 12, 2026", time: "6:00 PM ET", description: "Simone answers questions live about training, recovery, and the pieces in her storefront.", rsvps: 1840 },
+  { id: "ev2", personId: "emma-chamberlain", title: "Chamberlain Coffee tasting — new roast drop", kind: "Product drop", date: "Nov 14, 2026", time: "12:00 PM ET", description: "A tasting of the new roast, with the drop live in the storefront during the event.", rsvps: 920 },
+  { id: "ev3", personId: "lebron-james", title: "Community court opening — meetup", kind: "Meetup", date: "Nov 18, 2026", time: "4:00 PM ET", description: "Opening the new community court, with a Q&A and a first look at the storefront.", rsvps: 2310 },
+];

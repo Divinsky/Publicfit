@@ -16,6 +16,7 @@ export default function Nav() {
           <Link href="/page-manager">Page</Link>
           <Link href="/discover">Discover</Link>
           <Link href="/branded-content">Branded Content</Link>
+          <Link href="/events">Events</Link>
           <Link href="/waitlist">Waitlist</Link>
           <Link href="/trust">Trust &amp; Ethics</Link>
         </nav>

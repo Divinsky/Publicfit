@@ -80,6 +80,12 @@ export default function PrivacyPolicy() {
             posts are seeded and changes are kept local.
           </li>
           <li>
+            <strong>Events:</strong> when a creator creates an event, we store the event
+            details they provide (title, kind, date, time, description) so fans can see it and
+            RSVP. In the demo, events are seeded and created locally; nothing is posted
+            externally.
+          </li>
+          <li>
             <strong>Correction and deletion requests:</strong> you can ask us to correct or delete
             a profile. In the demo, requests are captured as local session state. In production,
             they go to a human reviewer, and deletion removes the profile and its embeddings.
