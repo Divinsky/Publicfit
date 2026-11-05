@@ -133,7 +133,7 @@ export default function PrivacyPolicy() {
       <section className="space-y-3 text-stone-700">
         <h2 className="font-serif text-2xl font-bold text-ink">Contact</h2>
         <p>
-          Irina Divinsky (IntelliGene AI) — Founder@IntelliGeneAI.com
+          For privacy questions or requests, contact us at parked@parkpiggy.app.
         </p>
       </section>
     </div>
