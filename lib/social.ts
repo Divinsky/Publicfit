@@ -42,7 +42,13 @@ export type SocialResult = {
 };
 
 const GRAPH_BASE = "https://graph.facebook.com/v21.0";
-const TOKEN = process.env.META_GRAPH_TOKEN || "";
+
+// Read per call. On Workers (OpenNext, nodejs_compat, compatibility_date
+// 2024-12-30) process.env is filled from secrets only inside a request, so
+// a module-level read is always empty and every lookup stays non-live.
+function getToken(): string {
+  return process.env.META_GRAPH_TOKEN || "";
+}
 
 // Public Instagram handles for the seeded demo people. Custom entries
 // use their own input as the handle attempt.
@@ -83,7 +89,8 @@ async function postJson(url: string, body: unknown): Promise<unknown> {
 }
 
 async function getOwnIgId(): Promise<string | null> {
-  const me = await fetchJson(`${GRAPH_BASE}/me?fields=instagram_business_account&access_token=${encodeURIComponent(TOKEN)}`) as {
+  const token = getToken();
+  const me = await fetchJson(`${GRAPH_BASE}/me?fields=instagram_business_account&access_token=${encodeURIComponent(token)}`) as {
     instagram_business_account?: { id?: string };
   };
   return me?.instagram_business_account?.id || null;
@@ -110,15 +117,16 @@ function toSource(profile: SocialProfile): Source[] {
 }
 
 async function fetchInstagram(handle: string): Promise<SocialProfile | null> {
+  const token = getToken();
   // Step 1: the token owner's Instagram business account id.
-  const me = await fetchJson(`${GRAPH_BASE}/me?fields=instagram_business_account&access_token=${encodeURIComponent(TOKEN)}`) as {
+  const me = await fetchJson(`${GRAPH_BASE}/me?fields=instagram_business_account&access_token=${encodeURIComponent(token)}`) as {
     instagram_business_account?: { id?: string };
   };
   const igId = me?.instagram_business_account?.id;
   if (!igId) return null;
   // Step 2: Business Discovery for the target handle's public profile.
   const fields = `business_discovery.username(${handle}){username,name,biography,followers_count,media_count,media.limit(3){caption,permalink,timestamp}}`;
-  const data = await fetchJson(`${GRAPH_BASE}/${igId}?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(TOKEN)}`) as {
+  const data = await fetchJson(`${GRAPH_BASE}/${igId}?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`) as {
     business_discovery?: {
       username?: string; name?: string; biography?: string; followers_count?: number;
       media?: { data?: { caption?: string; permalink?: string; timestamp?: string }[] };
@@ -142,8 +150,9 @@ async function fetchInstagram(handle: string): Promise<SocialProfile | null> {
 async function fetchFacebook(handle: string): Promise<SocialProfile | null> {
   // Public Page lookup by username. Fails quietly when the handle is not
   // a Page or the token lacks the permission — that is expected.
+  const token = getToken();
   const fields = "name,about,fan_count,link";
-  const d = await fetchJson(`${GRAPH_BASE}/${encodeURIComponent(handle)}?fields=${fields}&access_token=${encodeURIComponent(TOKEN)}`) as {
+  const d = await fetchJson(`${GRAPH_BASE}/${encodeURIComponent(handle)}?fields=${fields}&access_token=${encodeURIComponent(token)}`) as {
     name?: string; about?: string; fan_count?: number; link?: string;
   };
   if (!d?.name) return null;
@@ -165,7 +174,11 @@ async function fetchFacebook(handle: string): Promise<SocialProfile | null> {
  */
 export async function getSocialSources(personHandle: string): Promise<SocialResult> {
   const handle = HANDLE_MAP[personHandle] || cleanHandle(personHandle);
-  if (!TOKEN || !isSafeHandle(handle)) return { sources: [], live: false, profiles: [] };
+  const token = getToken();
+  // Missing token is a non-live miss. Do not cache it: the module Map
+  // outlives the request, and a stored empty result would keep returning
+  // live:false after the Worker secret is present.
+  if (!token || !isSafeHandle(handle)) return { sources: [], live: false, profiles: [] };
   const cached = CACHE.get(handle);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
   const profiles: SocialProfile[] = [];
@@ -180,6 +193,8 @@ export async function getSocialSources(personHandle: string): Promise<SocialResu
     live: profiles.length > 0,
     profiles,
   };
+  // Token was present for this fetch. A missing-token miss returns above
+  // and is never written, so it cannot stick in the module cache.
   CACHE.set(handle, { at: Date.now(), value: result });
   return result;
 }
@@ -204,11 +219,12 @@ export async function sendInstagramMessage(
   recipientIgId: string,
   text: string
 ): Promise<{ ok: boolean; live: boolean }> {
-  if (!TOKEN || !recipientIgId || !text.trim()) return { ok: false, live: false };
+  const token = getToken();
+  if (!token || !recipientIgId || !text.trim()) return { ok: false, live: false };
   try {
     const igId = await getOwnIgId();
     if (!igId) return { ok: false, live: false };
-    const url = `${GRAPH_BASE}/${igId}/messages?access_token=${encodeURIComponent(TOKEN)}`;
+    const url = `${GRAPH_BASE}/${igId}/messages?access_token=${encodeURIComponent(token)}`;
     const res = (await postJson(url, {
       recipient: { id: recipientIgId },
       message: { text: text.trim() },
@@ -225,13 +241,14 @@ export async function sendInstagramMessage(
  * not set or the fetch fails — callers fall back to the demo threads.
  */
 export async function getInstagramConversations(): Promise<DmThread[] | null> {
-  if (!TOKEN) return null;
+  const token = getToken();
+  if (!token) return null;
   try {
     const igId = await getOwnIgId();
     if (!igId) return null;
     const fields = "participants,messages.limit(5){message,from,created_time}";
     const data = (await fetchJson(
-      `${GRAPH_BASE}/${igId}/conversations?platform=instagram&fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(TOKEN)}`
+      `${GRAPH_BASE}/${igId}/conversations?platform=instagram&fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`
     )) as {
       data?: {
         id?: string;
@@ -267,9 +284,10 @@ export async function replyToInstagramComment(
   commentId: string,
   text: string
 ): Promise<{ ok: boolean; live: boolean }> {
-  if (!TOKEN || !commentId || !text.trim()) return { ok: false, live: false };
+  const token = getToken();
+  if (!token || !commentId || !text.trim()) return { ok: false, live: false };
   try {
-    const url = `${GRAPH_BASE}/${encodeURIComponent(commentId)}/replies?access_token=${encodeURIComponent(TOKEN)}`;
+    const url = `${GRAPH_BASE}/${encodeURIComponent(commentId)}/replies?access_token=${encodeURIComponent(token)}`;
     const res = (await postJson(url, { message: text.trim() })) as { id?: string };
     return { ok: !!res?.id, live: true };
   } catch {
@@ -283,11 +301,12 @@ export type LiveInsights = { reach: number; impressions: number; profileViews: n
 
 /** Last-28-day Instagram insights for the connected account. Null when not live. */
 export async function getInstagramInsights(): Promise<LiveInsights | null> {
-  if (!TOKEN) return null;
+  const token = getToken();
+  if (!token) return null;
   try {
     const igId = await getOwnIgId();
     if (!igId) return null;
-    const url = `${GRAPH_BASE}/${igId}/insights?metric=reach,impressions,profile_views&period=day&metric_type=total&access_token=${encodeURIComponent(TOKEN)}`;
+    const url = `${GRAPH_BASE}/${igId}/insights?metric=reach,impressions,profile_views&period=day&metric_type=total&access_token=${encodeURIComponent(token)}`;
     const data = (await fetchJson(url)) as {
       data?: { name?: string; values?: { value?: number }[] }[];
     };
@@ -311,18 +330,19 @@ export async function publishInstagramPost(
   caption: string,
   mentions: string[] = []
 ): Promise<{ ok: boolean; live: boolean; mediaId?: string }> {
-  if (!TOKEN || !imageUrl || !caption.trim()) return { ok: false, live: false };
+  const token = getToken();
+  if (!token || !imageUrl || !caption.trim()) return { ok: false, live: false };
   try {
     const igId = await getOwnIgId();
     if (!igId) return { ok: false, live: false };
     const fullCaption = [...mentions.map((m) => `@${m}`), caption.trim()].join(" ").trim();
     const create = (await postJson(
-      `${GRAPH_BASE}/${igId}/media?access_token=${encodeURIComponent(TOKEN)}`,
+      `${GRAPH_BASE}/${igId}/media?access_token=${encodeURIComponent(token)}`,
       { image_url: imageUrl, caption: fullCaption }
     )) as { id?: string };
     if (!create?.id) return { ok: false, live: false };
     const pub = (await postJson(
-      `${GRAPH_BASE}/${igId}/media_publish?access_token=${encodeURIComponent(TOKEN)}`,
+      `${GRAPH_BASE}/${igId}/media_publish?access_token=${encodeURIComponent(token)}`,
       { creation_id: create.id }
     )) as { id?: string };
     return { ok: !!pub?.id, live: true, mediaId: pub?.id };
@@ -340,21 +360,23 @@ export type LivePagePost = {
 };
 
 async function getOwnPageId(): Promise<string | null> {
+  const token = getToken();
   const data = (await fetchJson(
-    `${GRAPH_BASE}/me/accounts?fields=id&access_token=${encodeURIComponent(TOKEN)}`
+    `${GRAPH_BASE}/me/accounts?fields=id&access_token=${encodeURIComponent(token)}`
   )) as { data?: { id?: string }[] };
   return data?.data?.[0]?.id || null;
 }
 
 /** Live Facebook Page posts + visitor posts + their comments. Null when not live. */
 export async function getPagePosts(): Promise<LivePagePost[] | null> {
-  if (!TOKEN) return null;
+  const token = getToken();
+  if (!token) return null;
   try {
     const pageId = await getOwnPageId();
     if (!pageId) return null;
     const fields = "message,created_time,likes.summary(true),comments{message,from,created_time}";
     const data = (await fetchJson(
-      `${GRAPH_BASE}/${pageId}/posts?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(TOKEN)}`
+      `${GRAPH_BASE}/${pageId}/posts?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`
     )) as {
       data?: {
         id?: string; message?: string; created_time?: string;
@@ -384,9 +406,10 @@ export async function replyToPageComment(
   commentId: string,
   text: string
 ): Promise<{ ok: boolean; live: boolean }> {
-  if (!TOKEN || !commentId || !text.trim()) return { ok: false, live: false };
+  const token = getToken();
+  if (!token || !commentId || !text.trim()) return { ok: false, live: false };
   try {
-    const url = `${GRAPH_BASE}/${encodeURIComponent(commentId)}/comments?access_token=${encodeURIComponent(TOKEN)}`;
+    const url = `${GRAPH_BASE}/${encodeURIComponent(commentId)}/comments?access_token=${encodeURIComponent(token)}`;
     const res = (await postJson(url, { message: text.trim() })) as { id?: string };
     return { ok: !!res?.id, live: true };
   } catch {
@@ -396,11 +419,12 @@ export async function replyToPageComment(
 
 /** Update a Facebook Page's about text (pages_manage_metadata). */
 export async function updatePageInfo(about: string): Promise<{ ok: boolean; live: boolean }> {
-  if (!TOKEN || !about.trim()) return { ok: false, live: false };
+  const token = getToken();
+  if (!token || !about.trim()) return { ok: false, live: false };
   try {
     const pageId = await getOwnPageId();
     if (!pageId) return { ok: false, live: false };
-    const url = `${GRAPH_BASE}/${pageId}?access_token=${encodeURIComponent(TOKEN)}`;
+    const url = `${GRAPH_BASE}/${pageId}?access_token=${encodeURIComponent(token)}`;
     const res = (await postJson(url, { about: about.trim() })) as { success?: boolean };
     return { ok: res?.success !== false, live: true };
   } catch {
