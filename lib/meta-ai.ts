@@ -18,12 +18,19 @@ export type FitResult = {
 };
 
 const BASE = process.env.META_MODEL_API_BASE_URL || "https://api.meta.ai/v1";
-const KEY = process.env.META_MODEL_API_KEY || "";
 const SPARK_MODEL = process.env.META_SPARK_MODEL || "muse-spark-1.3";
 // Open-weights inference partner (Baseten Model APIs, OpenAI-compatible).
 const OPEN_BASE = process.env.META_OPEN_API_BASE_URL || "https://inference.baseten.co/v1";
-const OPEN_KEY = process.env.META_OPEN_API_KEY || "";
 const OPEN_MODEL = process.env.META_OPEN_MODEL || "meta-models/muse-spark-open-1026";
+
+// Keys are secrets. Read them per call — a module-level process.env read
+// is empty on Workers, so live scoring would always fall back to demo.
+function getModelKey(): string {
+  return process.env.META_MODEL_API_KEY || "";
+}
+function getOpenKey(): string {
+  return process.env.META_OPEN_API_KEY || "";
+}
 
 /** Deterministic hash used only for demo-mode scoring of custom names. */
 function hash01(text: string): number {
@@ -64,14 +71,15 @@ export async function scoreBrandFit(person: Person, brand: Brand, opts?: { extra
   const visualFit = await scoreVisualFit(person.style, brand.style);
   const sources: Source[] = [...person.sources, ...brand.sources, ...(opts?.extraSources || [])];
   const socialLive = opts?.socialLive ?? false;
+  const key = getModelKey();
 
-  if (!KEY) {
+  if (!key) {
     return buildDemo(person, brand, tags, visualFit, sources, socialLive);
   }
   try {
     const res = await fetch(`${BASE.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: SPARK_MODEL,
         messages: [
@@ -126,12 +134,13 @@ export async function embedAndTag(text: string): Promise<string[]> {
   const lower = text.toLowerCase();
   const vocab = ["athletic", "wellness", "luxury", "creator", "community", "excellence", "authenticity", "mental health", "inclusion", "longevity", "creativity"];
   const tags = vocab.filter((v) => lower.includes(v));
-  if (!OPEN_KEY) return tags.length ? tags : ["creator", "public-figure"];
+  const openKey = getOpenKey();
+  if (!openKey) return tags.length ? tags : ["creator", "public-figure"];
   try {
     // Best-effort live embedding call; result is intentionally not required
     // for scoring — the demo must work even if this endpoint differs.
     await fetch(`${OPEN_BASE.replace(/\/$/, "")}/embeddings`, {
-      method: "POST", headers: { Authorization: `Bearer ${OPEN_KEY}`, "Content-Type": "application/json" },
+      method: "POST", headers: { Authorization: `Bearer ${openKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: OPEN_MODEL, input: text }),
     });
   } catch { /* fall through to keyword tags */ }

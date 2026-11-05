@@ -7,8 +7,16 @@ import { demoEmbedding } from "./meta-ai";
  * in-memory data, so the app runs out of the box. Wire up DATABASE_URL
  * and a `pg` client to replace these functions with real queries;
  * the shape (people/brands with embedding vectors) is unchanged.
+ * DATABASE_URL is read per call: on Workers, process.env is empty at
+ * module scope even when the secret is set.
  */
-export const usingPostgres = Boolean(process.env.DATABASE_URL);
+function getDatabaseUrl(): string {
+  return process.env.DATABASE_URL || "";
+}
+
+export function usingPostgres(): boolean {
+  return Boolean(getDatabaseUrl());
+}
 
 export function listPeople() { return PEOPLE; }
 export function listBrands() { return BRANDS; }
