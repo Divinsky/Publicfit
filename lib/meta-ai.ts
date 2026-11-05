@@ -14,7 +14,7 @@ export type FitResult = {
   person: Person; brand: Brand; score: FitScore;
   personUpside: string; brandUpside: string; rationale: string[];
   sources: Source[]; visualFit: number; tags: string[];
-  mode: "live" | "demo"; model: string;
+  mode: "live" | "demo"; model: string; socialLive: boolean;
 };
 
 const BASE = process.env.META_MODEL_API_BASE_URL || "https://api.meta.ai/v1";
@@ -54,14 +54,19 @@ function demoScore(person: Person, brand: Brand): FitScore {
  * (audience overlap, product-category fit, documented track record,
  * brand safety). It is NOT a personality, character, or psychological
  * analysis — the prompt forbids inferring traits or private-life detail.
+ *
+ * opts.extraSources: live social sources (Instagram/Facebook) fetched
+ * once per request by the route and appended to the cited sources.
+ * opts.socialLive: whether those social sources are live, for the UI.
  */
-export async function scoreBrandFit(person: Person, brand: Brand): Promise<FitResult> {
+export async function scoreBrandFit(person: Person, brand: Brand, opts?: { extraSources?: Source[]; socialLive?: boolean }): Promise<FitResult> {
   const tags = await embedAndTag(`${person.name} ${person.signals.join(" ")} ${person.style.join(" ")} | ${brand.name} ${brand.signals.join(" ")}`);
   const visualFit = await scoreVisualFit(person.style, brand.style);
-  const sources: Source[] = [...person.sources, ...brand.sources];
+  const sources: Source[] = [...person.sources, ...brand.sources, ...(opts?.extraSources || [])];
+  const socialLive = opts?.socialLive ?? false;
 
   if (!KEY) {
-    return buildDemo(person, brand, tags, visualFit, sources);
+    return buildDemo(person, brand, tags, visualFit, sources, socialLive);
   }
   try {
     const res = await fetch(`${BASE.replace(/\/$/, "")}/chat/completions`, {
@@ -89,17 +94,17 @@ export async function scoreBrandFit(person: Person, brand: Brand): Promise<FitRe
     };
     score.overall = Math.round(score.category * 0.3 + score.audience * 0.3 + score.trackRecord * 0.2 + score.safety * 0.2);
     return { person, brand, score, personUpside: parsed.personUpside || "", brandUpside: parsed.brandUpside || "",
-      rationale: Array.isArray(parsed.rationale) ? parsed.rationale : [], sources, visualFit, tags, mode: "live", model: SPARK_MODEL };
+      rationale: Array.isArray(parsed.rationale) ? parsed.rationale : [], sources, visualFit, tags, mode: "live", model: SPARK_MODEL, socialLive };
   } catch {
-    return buildDemo(person, brand, tags, visualFit, sources);
+    return buildDemo(person, brand, tags, visualFit, sources, socialLive);
   }
 }
 
-function buildDemo(person: Person, brand: Brand, tags: string[], visualFit: number, sources: Source[]): FitResult {
+function buildDemo(person: Person, brand: Brand, tags: string[], visualFit: number, sources: Source[], socialLive: boolean): FitResult {
   const score = demoScore(person, brand);
   const shared = person.signals.filter((v) => brand.signals.includes(v));
   return {
-    person, brand, score, visualFit, tags, sources, mode: "demo", model: "seeded-demo (no META_MODEL_API_KEY)",
+    person, brand, score, visualFit, tags, sources, socialLive, mode: "demo", model: "seeded-demo (no META_MODEL_API_KEY)",
     rationale: [
       shared.length ? `Shared public positioning signals: ${shared.join(", ")}.` : "No direct shared signals — fit comes from audience and category overlap.",
       `Audience overlap: ${person.audience} vs ${brand.audience}`,

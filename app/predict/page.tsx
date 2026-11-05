@@ -13,7 +13,7 @@ function PredictInner() {
   const [brand, setBrand] = useState("__best__");
   const [customBrand, setCustomBrand] = useState("");
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<{ result?: FitResult; ranked?: FitResult[] } | null>(null);
+  const [data, setData] = useState<{ result?: FitResult; ranked?: FitResult[]; social?: { live: boolean; profiles: { handle: string }[] } } | null>(null);
   const [reviewed, setReviewed] = useState(false);
   const [published, setPublished] = useState(false);
 
@@ -60,6 +60,9 @@ function PredictInner() {
                 <h2 className="font-serif text-3xl font-bold">{main.person.name} × {main.brand.name}</h2>
                 <p className="text-sm text-stone-500">Mode: {main.mode} · Model: {main.model} · Visual fit (Muse Image path): {main.visualFit}/100</p>
                 <p className="text-sm text-stone-500">Tags (Muse Spark Open): {main.tags.join(", ") || "—"}</p>
+                {data?.social && (data.social.live
+                  ? <p className="text-sm text-teal-700">📱 Live social sources: Instagram/Facebook connected — {data.social.profiles.map((p) => `@${p.handle}`).join(", ")}</p>
+                  : <p className="text-sm text-stone-500">📱 Social sources: not connected — set META_GRAPH_TOKEN to pull live Instagram/Facebook profiles.</p>)}
               </div>
               <div className="text-center"><p className="font-serif text-6xl font-bold">{main.score.overall}</p><p className="text-sm">Fit Score / 100</p></div>
             </div>

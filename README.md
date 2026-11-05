@@ -78,3 +78,13 @@ Next.js 14 (App Router) + TypeScript + Tailwind CSS. API routes in `app/api/*`. 
 - Seeded scores are hand-tuned demo affinities; live mode replaces them with Meta Model API output.
 - Storefront products are sample picks labelled as such; no checkout is live and no purchase is taken.
 - Past-deal notes cover only widely reported partnerships; a low track-record score means "no documented deal found", not a negative judgment.
+
+## Facebook / Instagram live sources
+
+When `META_GRAPH_TOKEN` is set (see `.env.example`), the Predictor pulls
+a creator's public Instagram profile via Business Discovery and their
+public Facebook Page via the Graph API, and appends them as cited
+sources on the match card — the same sources Muse Spark scores from.
+Only public fields are read (bio, follower counts, public post links).
+Without the token, or if either fetch fails, the app falls back to its
+seeded public sources and the card reads "Social sources: not connected".
