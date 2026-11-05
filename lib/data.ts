@@ -48,6 +48,39 @@ export const PEOPLE: Person[] = [
       { label: "Vogue — Emma Chamberlain profile coverage", url: "https://www.vogue.com/tag/celebrity/emma-chamberlain", note: "Public press coverage of her work and style." },
     ],
   },
+  {
+    id: "taylor-swift", handle: "taylor-swift", name: "Taylor Swift",
+    role: "Singer-songwriter", tagline: "Storytelling, reinvention, and one of the largest live audiences in music.",
+    style: ["editorial", "classic", "bold", "warm"], signals: ["creativity", "community", "authenticity", "excellence"],
+    audience: "Music fans, pop culture audiences, and live-event crowds.",
+    sources: [
+      { label: "Taylor Swift — Official site", url: "https://www.taylorswift.com/", note: "Her own public site." },
+      { label: "Taylor Swift — Wikipedia", url: "https://en.wikipedia.org/wiki/Taylor_Swift", note: "Public career record." },
+      { label: "Capital One — Taylor Swift partnership (press coverage)", url: "https://www.capitalone.com/", note: "Capital One has publicly partnered with Swift; see brand press releases for deal terms." },
+    ],
+  },
+  {
+    id: "beyonce", handle: "beyonce", name: "Beyoncé",
+    role: "Singer · Founder, Parkwood Entertainment", tagline: "Artistry, heritage, and large-scale cultural moments.",
+    style: ["premium", "editorial", "bold", "classic"], signals: ["creativity", "excellence", "community", "authenticity"],
+    audience: "Music fans, fashion audiences, and cultural-event crowds.",
+    sources: [
+      { label: "Beyoncé — Official site", url: "https://www.beyonce.com/", note: "Her own public site." },
+      { label: "Parkwood Entertainment", url: "https://www.parkwoodentertainment.com/", note: "Her own public company." },
+      { label: "adidas — Ivy Park partnership (press coverage)", url: "https://www.adidas.com/us/about.html", note: "Ivy Park partnership publicly documented; see brand press releases." },
+    ],
+  },
+  {
+    id: "mrbeast", handle: "mrbeast", name: "MrBeast",
+    role: "Creator · Founder, Feastables", tagline: "Large-scale challenges, philanthropy, and creator-led commerce.",
+    style: ["bold", "casual", "editorial"], signals: ["creativity", "community", "authenticity", "excellence"],
+    audience: "Gen Z and young millennial YouTube audiences.",
+    sources: [
+      { label: "MrBeast — YouTube", url: "https://www.youtube.com/@MrBeast", note: "His public channel." },
+      { label: "Feastables — About", url: "https://www.feastables.com/", note: "His own public brand." },
+      { label: "MrBeast — Official site", url: "https://www.mrbeast.com/", note: "His own public site." },
+    ],
+  },
 ];
 
 export const BRANDS: Brand[] = [
@@ -61,6 +94,9 @@ export const BRANDS: Brand[] = [
   { id: "dove", name: "Dove", category: "Personal care", tagline: "Real-beauty and self-esteem campaigns.", style: ["clean", "warm", "minimal"], signals: ["inclusion", "mental health", "authenticity"], audience: "Broad, wellness-minded consumers.", sources: [{ label: "Dove — Real Beauty", url: "https://www.dove.com/us/en/stories/about-dove.html", note: "Public campaign positioning." }] },
   { id: "spotify", name: "Spotify", category: "Audio / media", tagline: "Creator audio, podcasts, and music discovery.", style: ["casual", "editorial", "bold"], signals: ["creativity", "authenticity", "community"], audience: "Listeners and creator-audio fans.", sources: [{ label: "Spotify — About", url: "https://newsroom.spotify.com/company-info/", note: "Public company info." }] },
   { id: "whoop", name: "WHOOP", category: "Wearables / recovery", tagline: "Recovery, strain, and sleep for high performers.", style: ["clean", "athletic", "minimal"], signals: ["longevity", "wellness", "excellence"], audience: "Athletes and performance-minded consumers.", sources: [{ label: "WHOOP", url: "https://www.whoop.com/", note: "Public brand site." }] },
+  { id: "coca-cola", name: "Coca-Cola", category: "Beverages", tagline: "Global beverages and cultural moments.", style: ["classic", "bold", "warm"], signals: ["community", "creativity", "excellence"], audience: "Broad global consumers.", sources: [{ label: "Coca-Cola — About", url: "https://www.coca-cola.com/", note: "Public brand site." }] },
+  { id: "sephora", name: "Sephora", category: "Beauty retail", tagline: "Beauty retail and creator-led launches.", style: ["editorial", "premium", "clean"], signals: ["creativity", "authenticity", "community"], audience: "Beauty and lifestyle shoppers.", sources: [{ label: "Sephora", url: "https://www.sephora.com/", note: "Public brand site." }] },
+  { id: "gymshark", name: "Gymshark", category: "Activewear", tagline: "Creator-led fitness apparel.", style: ["athletic", "bold", "casual"], signals: ["community", "creativity", "wellness"], audience: "Fitness creators and gym audiences.", sources: [{ label: "Gymshark", url: "https://www.gymshark.com/", note: "Public brand site." }] },
 ];
 
 // Hand-tuned demo affinities (used only when no live API key is set).
@@ -80,6 +116,24 @@ const AFFINITY: Record<string, Record<string, [number, number, number, number]>>
     "louis-vuitton": [90, 92, 94, 86], spotify: [92, 90, 70, 90], dove: [85, 84, 55, 92],
     "alo-yoga": [84, 86, 52, 90], athleta: [76, 78, 45, 90], nike: [70, 74, 48, 86],
     adidas: [78, 80, 50, 86], beats: [72, 76, 42, 86], whoop: [68, 62, 38, 88], gatorade: [50, 52, 30, 86],
+  },
+  "taylor-swift": {
+    spotify: [92, 94, 85, 90], "coca-cola": [85, 88, 60, 90], sephora: [80, 85, 55, 90],
+    nike: [82, 88, 65, 86], dove: [82, 86, 50, 92], beats: [75, 80, 50, 84],
+    "louis-vuitton": [78, 80, 45, 80], athleta: [70, 72, 40, 90], "alo-yoga": [65, 68, 35, 90],
+    adidas: [68, 70, 35, 86], gymshark: [60, 65, 30, 88], whoop: [55, 55, 30, 88], gatorade: [55, 58, 30, 88],
+  },
+  "beyonce": {
+    adidas: [90, 92, 88, 86], "coca-cola": [88, 90, 75, 88], sephora: [85, 88, 60, 90],
+    "louis-vuitton": [85, 86, 60, 80], athleta: [78, 82, 65, 90], spotify: [82, 86, 55, 90],
+    nike: [80, 85, 55, 86], beats: [80, 84, 60, 84], dove: [80, 84, 55, 92],
+    gatorade: [70, 75, 50, 88], "alo-yoga": [70, 74, 40, 90], gymshark: [62, 65, 35, 88], whoop: [60, 60, 35, 88],
+  },
+  "mrbeast": {
+    spotify: [85, 88, 60, 90], beats: [82, 86, 60, 84], gatorade: [80, 84, 50, 88],
+    nike: [78, 82, 55, 86], "coca-cola": [75, 80, 45, 86], adidas: [72, 76, 45, 86],
+    gymshark: [70, 75, 40, 86], whoop: [65, 68, 35, 88], athleta: [55, 58, 30, 90],
+    dove: [55, 58, 30, 92], "alo-yoga": [50, 52, 25, 90], sephora: [45, 48, 25, 88], "louis-vuitton": [40, 45, 20, 80],
   },
 };
 
@@ -108,6 +162,18 @@ export const STOREFRONTS: Record<string, Product[]> = {
   "emma-chamberlain": [
     { id: "ec1", name: "Steeped coffee bags (sample pick)", brand: "Chamberlain Coffee", price: 18, kind: "own", fit: 98, note: "Her own public brand." },
     { id: "ec2", name: "Everyday tote (sample pick)", brand: "Louis Vuitton", price: 0, kind: "partner", fit: 91, note: "Shown as a partner category only — price intentionally blank in demo; no checkout is live." },
+  ],
+  "taylor-swift": [
+    { id: "ts1", name: "Vinyl record (sample pick)", brand: "Spotify", price: 32, kind: "partner", fit: 93, note: "High-fit audio + music-culture overlap." },
+    { id: "ts2", name: "Everyday lip (sample pick)", brand: "Sephora", price: 0, kind: "partner", fit: 85, note: "Shown as a partner category only — price intentionally blank in demo; no checkout is live." },
+  ],
+  "beyonce": [
+    { id: "b1", name: "Ivy Park hoodie (sample pick)", brand: "adidas", price: 120, kind: "partner", fit: 91, note: "Publicly documented Ivy Park partnership; see Predictor citations." },
+    { id: "b2", name: "Fragrance (sample pick)", brand: "Sephora", price: 0, kind: "partner", fit: 86, note: "Shown as a partner category only — price intentionally blank in demo; no checkout is live." },
+  ],
+  "mrbeast": [
+    { id: "mb1", name: "Chocolate bar multipack (sample pick)", brand: "Feastables", price: 24, kind: "own", fit: 96, note: "His own public brand." },
+    { id: "mb2", name: "Studio headphones (sample pick)", brand: "Beats by Dre", price: 349, kind: "partner", fit: 87, note: "High-fit audio + creator-culture overlap." },
   ],
 };
 
