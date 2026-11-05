@@ -181,3 +181,39 @@ export function getPerson(idOrHandle: string) {
   return PEOPLE.find((p) => p.id === idOrHandle || p.handle === idOrHandle);
 }
 export function getBrand(id: string) { return BRANDS.find((b) => b.id === id); }
+
+// Seeded demo Instagram DM conversations for the Messages inbox.
+// Senders are fictional (a fan, a small brand) and the threads are
+// illustrative only — they are not real DMs. When a creator's Instagram
+// is connected, live threads replace these via the Graph API.
+export type DmMessage = { from: "them" | "creator"; text: string; time: string };
+export type DmConversation = {
+  id: string; personId: string; fromName: string; fromHandle: string; kind: "fan" | "brand";
+  preview: string; messages: DmMessage[]; recipientIgId?: string;
+};
+export const MESSAGES: DmConversation[] = [
+  {
+    id: "dm-simone-1", personId: "simone-biles", fromName: "Maya R.", fromHandle: "@maya.runs", kind: "fan",
+    preview: "Hi! Is the Athleta tight from your storefront true to size?",
+    messages: [
+      { from: "them", text: "Hi! I love your storefront — is the Athleta tight from it true to size?", time: "Tue 10:14" },
+      { from: "creator", text: "Hi Maya! I wear a small and it fits true to size. The pocket is great for a phone on runs.", time: "Tue 10:31" },
+      { from: "them", text: "Perfect, ordering it now. Thank you!", time: "Tue 10:33" },
+    ],
+  },
+  {
+    id: "dm-emma-1", personId: "emma-chamberlain", fromName: "North Roast Coffee", fromHandle: "@northroast", kind: "brand",
+    preview: "We'd love to talk about a tasting collab for Chamberlain Coffee fans.",
+    messages: [
+      { from: "them", text: "Hi Emma! We're a small roaster and we'd love to talk about a tasting collab for Chamberlain Coffee fans.", time: "Mon 15:02" },
+      { from: "them", text: "Happy to send samples and a one-pager — no pressure at all.", time: "Mon 15:03" },
+    ],
+  },
+  {
+    id: "dm-lebron-1", personId: "lebron-james", fromName: "Dre K.", fromHandle: "@dre.kicks", kind: "fan",
+    preview: "That LeBron shoe on your storefront — is it the same colorway as the Finals pair?",
+    messages: [
+      { from: "them", text: "That LeBron shoe on your storefront — is it the same colorway as the Finals pair?", time: "Sun 18:40" },
+    ],
+  },
+];

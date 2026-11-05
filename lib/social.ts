@@ -5,15 +5,22 @@
 // fetched and converted into the same cited Source entries the scorer
 // already consumes, so live social evidence shows up in the Predictor's
 // source list and in the Muse Spark prompt. Only public fields are ever
-// read (username, bio/about, follower/fan counts, public post captions
-// and permalinks) — no private data, no DMs, no non-public content.
+// read for sources (username, bio/about, follower/fan counts, public post
+// captions and permalinks) — no private data, no non-public content.
+//
+// Messages (instagram_manage_messages) is separate: when a creator has
+// connected their Instagram, the Messages inbox reads the DM threads they
+// open and sends the replies they write, through the Instagram Messaging
+// API. DMs are only ever touched at the creator's request, never scraped
+// in bulk, and never used for scoring.
 //
 // What it needs: a Meta app user access token with instagram_basic and
 // pages_read_engagement, from an account with a connected Instagram
 // business/creator account (Business Discovery runs off the token
-// owner's account). Without the token, or on any fetch failure, this
-// returns no sources and the app keeps working exactly as before — the
-// demo never breaks on a missing social token.
+// owner's account). Messaging also needs instagram_manage_messages.
+// Without the token, or on any fetch failure, this returns no sources
+// and the app keeps working exactly as before — the demo never breaks
+// on a missing social token.
 //
 // Env: META_GRAPH_TOKEN (optional). See .env.example for setup notes.
 import type { Source } from "./data";
@@ -62,6 +69,24 @@ async function fetchJson(url: string): Promise<unknown> {
   const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`Graph API ${res.status}`);
   return res.json();
+}
+
+async function postJson(url: string, body: unknown): Promise<unknown> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`Graph API ${res.status}`);
+  return res.json();
+}
+
+async function getOwnIgId(): Promise<string | null> {
+  const me = await fetchJson(`${GRAPH_BASE}/me?fields=instagram_business_account&access_token=${encodeURIComponent(TOKEN)}`) as {
+    instagram_business_account?: { id?: string };
+  };
+  return me?.instagram_business_account?.id || null;
 }
 
 function toSource(profile: SocialProfile): Source[] {
@@ -157,4 +182,80 @@ export async function getSocialSources(personHandle: string): Promise<SocialResu
   };
   CACHE.set(handle, { at: Date.now(), value: result });
   return result;
+}
+
+// --- Instagram messaging (instagram_manage_messages) ---
+
+export type DmThread = {
+  id: string;
+  fromName: string;
+  fromHandle: string;
+  preview: string;
+  messages: { from: "them" | "creator"; text: string; time: string }[];
+};
+
+/**
+ * Send a creator-written reply to an Instagram DM thread via the
+ * Instagram Messaging API. Returns { ok, live }. Live only when the
+ * token is set and the recipient has a real Instagram user id; the
+ * demo seeded threads have none, so they stay local.
+ */
+export async function sendInstagramMessage(
+  recipientIgId: string,
+  text: string
+): Promise<{ ok: boolean; live: boolean }> {
+  if (!TOKEN || !recipientIgId || !text.trim()) return { ok: false, live: false };
+  try {
+    const igId = await getOwnIgId();
+    if (!igId) return { ok: false, live: false };
+    const url = `${GRAPH_BASE}/${igId}/messages?access_token=${encodeURIComponent(TOKEN)}`;
+    const res = (await postJson(url, {
+      recipient: { id: recipientIgId },
+      message: { text: text.trim() },
+    })) as { message_id?: string };
+    return { ok: !!res?.message_id, live: true };
+  } catch {
+    return { ok: false, live: false };
+  }
+}
+
+/**
+ * Live Instagram DM threads for the connected account, in the same
+ * shape as the seeded demo threads. Returns null when the token is
+ * not set or the fetch fails — callers fall back to the demo threads.
+ */
+export async function getInstagramConversations(): Promise<DmThread[] | null> {
+  if (!TOKEN) return null;
+  try {
+    const igId = await getOwnIgId();
+    if (!igId) return null;
+    const fields = "participants,messages.limit(5){message,from,created_time}";
+    const data = (await fetchJson(
+      `${GRAPH_BASE}/${igId}/conversations?platform=instagram&fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(TOKEN)}`
+    )) as {
+      data?: {
+        id?: string;
+        participants?: { data?: { username?: string; name?: string }[] };
+        messages?: { data?: { message?: string; from?: { username?: string }; created_time?: string }[] };
+      }[];
+    };
+    const threads: DmThread[] = (data?.data || []).map((c) => {
+      const other = (c.participants?.data || []).find((p) => p.username && p.username !== "") || {};
+      const msgs = (c.messages?.data || []).map((m) => ({
+        from: "them" as const,
+        text: m.message || "",
+        time: (m.created_time || "").slice(0, 10),
+      }));
+      return {
+        id: c.id || "",
+        fromName: other.name || other.username || "Instagram user",
+        fromHandle: other.username ? `@${other.username}` : "",
+        preview: msgs[msgs.length - 1]?.text || "",
+        messages: msgs,
+      };
+    }).filter((t) => t.id);
+    return threads;
+  } catch {
+    return null;
+  }
 }

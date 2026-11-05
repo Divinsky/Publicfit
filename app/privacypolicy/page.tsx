@@ -44,7 +44,16 @@ export default function PrivacyPolicy() {
             <strong>Public social data:</strong> when live social sources are connected, we read
             public Instagram and Facebook data (profile name, bio, follower counts, public Page
             information) through Meta&apos;s Graph API. We only use public data — no private
-            profiles, direct messages, location, or contact details.
+            profiles, location, or contact details. Direct messages are handled separately, only
+            through the Messages feature (see below).
+          </li>
+          <li>
+            <strong>Instagram messages:</strong> when a creator uses Messages, we read the
+            direct-message threads they open and send the replies they write, through the
+            Instagram Messaging API, using their connected account. Only the threads the creator
+            opens are read, only at their request, and messages are never used for scoring. In
+            the demo, conversations are seeded and replies are kept local; nothing is sent
+            externally.
           </li>
           <li>
             <strong>Correction and deletion requests:</strong> you can ask us to correct or delete
@@ -57,8 +66,10 @@ export default function PrivacyPolicy() {
       <section className="space-y-3 text-stone-700">
         <h2 className="font-serif text-2xl font-bold text-ink">What we do not collect</h2>
         <p>
-          We do not collect private account data, direct messages, location data, payment
-          information, or passwords. There is no account or login on this site. We do not sell
+          We do not collect private account data, location data, payment
+          information, or passwords. There is no account or login on this site. Direct messages
+          are only read and sent through the Messages feature, with the connected creator&apos;s
+          permission, and only for the threads they open. We do not sell
           personal information, and we do not use it for advertising.
         </p>
       </section>

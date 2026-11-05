@@ -9,6 +9,7 @@ export default function Nav() {
           <Link href="/predict">Brand Fit Predictor</Link>
           <Link href="/store/simone-biles">Storefronts</Link>
           <Link href="/feed">Fan Feed</Link>
+          <Link href="/messages">Messages</Link>
           <Link href="/waitlist">Waitlist</Link>
           <Link href="/trust">Trust &amp; Ethics</Link>
         </nav>

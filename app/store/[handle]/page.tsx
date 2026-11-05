@@ -28,7 +28,7 @@ export default function Storefront({ params }: { params: { handle: string } }) {
         <p className="text-sm text-stone-500">{person.role}</p>
         <h1 className="font-serif text-4xl font-bold">{person.name} — Storefront</h1>
         <p className="text-stone-600 mt-2 max-w-2xl">{person.tagline}</p>
-        <div className="mt-3 flex flex-wrap gap-3 items-center"><TrustBadges /><DataControls person={person} /></div>
+        <div className="mt-3 flex flex-wrap gap-3 items-center"><TrustBadges /><DataControls person={person} /><Link href="/messages" className="bg-ink text-white px-4 py-2 rounded-full text-sm font-medium">Message →</Link></div>
       </section>
 
       <section>
